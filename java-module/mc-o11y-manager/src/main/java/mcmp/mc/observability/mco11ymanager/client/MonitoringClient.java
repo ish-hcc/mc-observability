@@ -1,6 +1,7 @@
 package mcmp.mc.observability.mco11ymanager.client;
 
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.model.SpiderMonitoring;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,6 @@ public interface MonitoringClient {
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     Object deleteTarget(@PathVariable String nsId, @PathVariable String targetId);
 
-
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
     Object getItemList(@PathVariable String nsId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
@@ -37,7 +37,6 @@ public interface MonitoringClient {
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH + "/{itemSeq}")
     Object deleteItem(@PathVariable String nsId, @PathVariable String targetId, @PathVariable Long itemSeq);
 
-
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
     Object getStorageList(@PathVariable String nsId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
@@ -46,7 +45,6 @@ public interface MonitoringClient {
     Object updateStorage(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
     Object deleteStorage(@PathVariable String nsId, @PathVariable String targetId, @PathVariable Long storageSeq);
-
 
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)
     Object getInfluxDBList();

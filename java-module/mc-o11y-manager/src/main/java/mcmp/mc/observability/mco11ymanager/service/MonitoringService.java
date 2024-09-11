@@ -7,11 +7,14 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.mco11ymanager.client.SpiderClient;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.enums.OS;
+import mcmp.mc.observability.mco11ymanager.model.SpiderMonitoring;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugSshKey;
+import mcmp.mc.observability.mco11ymanager.model.dto.SpiderMonitoringGetVMMonitoringDto;
 import mcmp.mc.observability.mco11ymanager.util.Utils;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +30,7 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class MonitoringService {
     private final TumblebugClient tumblebugClient;
+    private final SpiderClient spiderClient;
 
     public TumblebugNS getNs() {
         return tumblebugClient.getNSList();
@@ -119,4 +123,26 @@ public class MonitoringService {
         return result;
     }
 
+    public SpiderMonitoring.MetricData getSpiderVMMonitoring(String nsId, String targetId, String metricType, String timeBeforeHour, String intervalMinute) {
+        TumblebugMCI mciList = tumblebugClient.getMCIList(nsId);
+
+        if( mciList == null || mciList.getMci() == null || mciList.getMci().isEmpty()) return null;
+
+        for (TumblebugMCI.MCI mci : mciList.getMci()) {
+            if (mci.getVm() == null || mci.getVm().isEmpty()) return null;
+
+            for (TumblebugMCI.Vm vm : mci.getVm()) {
+                if (!vm.getId().equals(targetId)) continue;
+
+                SpiderMonitoringGetVMMonitoringDto spiderMonitoringGetVMMonitoringDto = new SpiderMonitoringGetVMMonitoringDto();
+                spiderMonitoringGetVMMonitoringDto.setConnectionName(vm.getConnectionName());
+                spiderMonitoringGetVMMonitoringDto.setTimeBeforeHour(timeBeforeHour);
+                spiderMonitoringGetVMMonitoringDto.setIntervalMinute(intervalMinute);
+
+                return spiderClient.getVMMonitoring(vm.getName(), metricType, spiderMonitoringGetVMMonitoringDto);
+            }
+        }
+
+        return null;
+    }
 }

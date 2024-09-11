@@ -6,6 +6,7 @@ dependencies {
     implementation 'com.jcraft:jsch:0.1.44-1'
     implementation 'io.github.openfeign:feign-httpclient:11.1'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.5'
+    implementation project(':mc-o11y-agent')
 }
 
 jar {

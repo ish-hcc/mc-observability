@@ -3,15 +3,9 @@ package mcmp.mc.observability.mco11ymanager.controller;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.model.SpiderMonitoring;
 import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,6 +47,14 @@ public class MonitoringController {
     @DeleteMapping(Constants.TARGET_PATH)
     public Object deleteTarget(@PathVariable String nsId, @PathVariable String targetId) {
         return monitoringClient.deleteTarget(nsId, targetId);
+    }
+
+    // cb-spider Monitoring
+    @GetMapping(Constants.MONITORING_CSP_PATH)
+    public SpiderMonitoring.MetricData getVMMonitoring(@PathVariable String nsId, @PathVariable String targetId,
+            @PathVariable String metricType, @RequestParam(required = false, defaultValue = "1") String timeBeforeHour,
+            @RequestParam(required = false, defaultValue = "1") String intervalMinute) {
+        return monitoringService.getSpiderVMMonitoring(nsId, targetId, metricType, timeBeforeHour, intervalMinute);
     }
 
     // monitoring item api

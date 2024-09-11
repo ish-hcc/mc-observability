@@ -5,19 +5,19 @@ networks:
     driver: bridge
 
 services:
-  mc-o11y-manager:
-    image: cloudbaristaorg/mc-observability
-    container_name: mc-o11y-service
-    ports:
-      - 18080:18080
-      - 18081:18081
-    networks:
-      - internal_network
-      - external_network
-    environment:
-      - TUMBLEBUG_URL=http://cb-tumblebug:1323
-      - TUMBLEBUG_ID=default
-      - TUMBLEBUG_PW=default
+#   mc-o11y-manager:
+#     image: cloudbaristaorg/mc-observability
+#     container_name: mc-o11y-service
+#     ports:
+#       - 18080:18080
+#       - 18081:18081
+#     networks:
+#       - internal_network
+#       - external_network
+#     environment:
+#       - TUMBLEBUG_URL=http://cb-tumblebug:1323
+#       - TUMBLEBUG_ID=default
+#       - TUMBLEBUG_PW=default
 
   mariadb:
     image: mariadb:10.7.6

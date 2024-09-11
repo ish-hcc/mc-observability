@@ -16,7 +16,7 @@ public class TumblebugFeignConfig {
     private String pw;
 
     @Bean
-    public RequestInterceptor basicAuthRequestInterceptor() {
+    public RequestInterceptor tumblebugBasicAuthRequestInterceptor() {
         return requestTemplate -> {
             String auth = id + ":" + pw;
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
