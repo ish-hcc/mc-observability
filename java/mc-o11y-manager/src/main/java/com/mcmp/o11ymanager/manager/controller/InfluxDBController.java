@@ -31,6 +31,9 @@ public class InfluxDBController {
 
     private final InfluxDbFacadeService influxDbFacadeService;
     private final MonitoringCacheService monitoringCacheService;
+    private final com.mcmp.o11ymanager.manager.service.influx.InfluxMetaCache influxMetaCache;
+    private final com.mcmp.o11ymanager.manager.service.influx.InfluxClientProvider
+            influxClientProvider;
     private final org.springframework.beans.factory.ObjectProvider<MonitoringCacheWarmScheduler>
             monitoringCacheWarmScheduler;
 
@@ -97,7 +100,12 @@ public class InfluxDBController {
             operationId = "GetMonitoringCacheStats",
             description = "Retrieve in-memory monitoring metric cache statistics")
     public ResBody<Map<String, Object>> cacheStats() {
-        return new ResBody<>(monitoringCacheService.stats());
+        Map<String, Object> out = new java.util.LinkedHashMap<>(monitoringCacheService.stats());
+        out.put("influxMeta", influxMetaCache.stats());
+        out.put("influxSharedClients", influxClientProvider.size());
+        MonitoringCacheWarmScheduler scheduler = monitoringCacheWarmScheduler.getIfAvailable();
+        out.put("warm", scheduler == null ? Map.of("enabled", false) : scheduler.stats());
+        return new ResBody<>(out);
     }
 
     @DeleteMapping("/cache")
@@ -114,8 +122,7 @@ public class InfluxDBController {
     @Operation(
             summary = "WarmMonitoringCache",
             operationId = "WarmMonitoringCache",
-            description =
-                    "Trigger an immediate cache-warming pass over the recently created VMs (top-N).")
+            description = "Trigger an immediate cache-warming pass over the current top-N targets.")
     public ResBody<Map<String, Object>> warmCache() {
         MonitoringCacheWarmScheduler scheduler = monitoringCacheWarmScheduler.getIfAvailable();
         if (scheduler == null) {
