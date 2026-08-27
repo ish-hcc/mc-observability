@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { SECTIONS } from '../lib/lastSection';
+import { toSection } from '../lib/lastSection';
 import NamespaceHome from './NamespaceHome';
 import InfraOverview from './InfraOverview';
 import NotFound from './NotFound';
@@ -15,8 +15,9 @@ import NotFound from './NotFound';
  */
 export default function SectionEntry() {
   const { section } = useParams();
-  if (!SECTIONS.includes(section)) return <NotFound />;
-  return <NamespaceHome section={section} />;
+  const canonical = toSection(section);
+  if (!canonical) return <NotFound />;
+  return <NamespaceHome section={canonical} />;
 }
 
 /**
@@ -27,5 +28,6 @@ export default function SectionEntry() {
  */
 export function NsRootOrSection() {
   const { nsId } = useParams();
-  return SECTIONS.includes(nsId) ? <NamespaceHome section={nsId} /> : <InfraOverview />;
+  const section = toSection(nsId);
+  return section ? <NamespaceHome section={section} /> : <InfraOverview />;
 }
