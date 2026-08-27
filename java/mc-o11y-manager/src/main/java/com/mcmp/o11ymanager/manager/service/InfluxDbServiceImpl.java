@@ -14,6 +14,7 @@ import com.mcmp.o11ymanager.manager.mapper.influx.QueryMapper;
 import com.mcmp.o11ymanager.manager.model.influx.InfluxQl;
 import com.mcmp.o11ymanager.manager.repository.InfluxJpaRepository;
 import com.mcmp.o11ymanager.manager.service.cache.MonitoringCacheService;
+import com.mcmp.o11ymanager.manager.service.influx.ChunkedMetricQueryService;
 import com.mcmp.o11ymanager.manager.service.influx.InfluxClientProvider;
 import com.mcmp.o11ymanager.manager.service.influx.InfluxMetaCache;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
@@ -45,6 +46,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private final InfluxMapper influxMapper;
     private final MonitoringCacheService monitoringCacheService;
     private final InfluxClientProvider influxClientProvider;
+    private final ChunkedMetricQueryService chunkedMetricQueryService;
     private final InfluxMetaCache influxMetaCache;
 
     private static final String NS_ID = "ns_id";
@@ -284,7 +286,16 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                             nsId, infraId));
         }
 
-        List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
+        List<MetricDTO> metrics =
+                chunkedMetricQueryService.fetch(
+                        s,
+                        rp,
+                        req,
+                        sliceQuery ->
+                                exec(s, sliceQuery)
+                                        .map(QueryMapper::toMetricDTOs)
+                                        .orElse(List.of()),
+                        () -> exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of()));
 
         return metrics.stream()
                 .map(
@@ -463,7 +474,16 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             return List.of();
         }
 
-        List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
+        List<MetricDTO> metrics =
+                chunkedMetricQueryService.fetch(
+                        s,
+                        rp,
+                        req,
+                        sliceQuery ->
+                                exec(s, sliceQuery)
+                                        .map(QueryMapper::toMetricDTOs)
+                                        .orElse(List.of()),
+                        () -> exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of()));
 
         return metrics.stream()
                 .map(

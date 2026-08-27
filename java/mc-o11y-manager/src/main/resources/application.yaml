@@ -170,6 +170,17 @@ monitoring:
     refresh-threads: ${MONITORING_CACHE_REFRESH_THREADS:8}
     max-weight-mb: ${MONITORING_CACHE_MAX_WEIGHT_MB:512}
     estimated-bytes-per-point: ${MONITORING_CACHE_BYTES_PER_POINT:200}
+    chunk:
+      # 조회 구간을 절대 시각 슬라이스로 잘라, 과거 슬라이스를 재사용한다.
+      # InfluxDB 가 훑는 데이터 양을 줄이는 장치이며 사용자 응답 지연과는 무관하다
+      # (그쪽은 결과 캐시 + SWR 이 이미 처리한다). 기본 off.
+      enabled: ${MONITORING_CACHE_CHUNK_ENABLED:false}
+      target-chunks: ${MONITORING_CACHE_CHUNK_TARGET:12}
+      max-chunks: ${MONITORING_CACHE_CHUNK_MAX:48}
+      min-range-seconds: ${MONITORING_CACHE_CHUNK_MIN_RANGE_SECONDS:900}
+      settle-seconds: ${MONITORING_CACHE_CHUNK_SETTLE_SECONDS:0}
+      max-slices: ${MONITORING_CACHE_CHUNK_MAX_SLICES:20000}
+      slice-ttl-seconds: ${MONITORING_CACHE_CHUNK_SLICE_TTL_SECONDS:1800}
     access-tracker:
       max-size: ${MONITORING_CACHE_ACCESS_MAX_SIZE:2000}
       window-seconds: ${MONITORING_CACHE_ACCESS_WINDOW_SECONDS:900}

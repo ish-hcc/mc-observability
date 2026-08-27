@@ -34,6 +34,8 @@ public class InfluxDBController {
     private final com.mcmp.o11ymanager.manager.service.influx.InfluxMetaCache influxMetaCache;
     private final com.mcmp.o11ymanager.manager.service.influx.InfluxClientProvider
             influxClientProvider;
+    private final com.mcmp.o11ymanager.manager.service.influx.ChunkedMetricQueryService
+            chunkedMetricQueryService;
     private final org.springframework.beans.factory.ObjectProvider<MonitoringCacheWarmScheduler>
             monitoringCacheWarmScheduler;
 
@@ -103,6 +105,7 @@ public class InfluxDBController {
         Map<String, Object> out = new java.util.LinkedHashMap<>(monitoringCacheService.stats());
         out.put("influxMeta", influxMetaCache.stats());
         out.put("influxSharedClients", influxClientProvider.size());
+        out.put("chunk", chunkedMetricQueryService.stats());
         MonitoringCacheWarmScheduler scheduler = monitoringCacheWarmScheduler.getIfAvailable();
         out.put("warm", scheduler == null ? Map.of("enabled", false) : scheduler.stats());
         return new ResBody<>(out);
@@ -115,6 +118,7 @@ public class InfluxDBController {
             description = "Invalidate all entries in the monitoring metric cache")
     public ResBody<String> invalidateCache() {
         monitoringCacheService.invalidateAll();
+        chunkedMetricQueryService.invalidateAll();
         return new ResBody<>("ok");
     }
 
