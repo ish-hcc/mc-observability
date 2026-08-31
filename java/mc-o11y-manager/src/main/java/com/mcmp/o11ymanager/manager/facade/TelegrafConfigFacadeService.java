@@ -52,6 +52,12 @@ public class TelegrafConfigFacadeService {
             new ClassPathResource("telegraf_inputs_nvidia_smi");
     private final ClassPathResource telegrafProcessorsNvidiaSmiToDcgm =
             new ClassPathResource("telegraf_processors_nvidia_smi_to_dcgm");
+    // MIG가 켜진 GPU는 NVML의 장치 단위 utilization 카운터가 꺼져 nvidia-smi로 사용률을 못 얻는다.
+    // GPM API가 그 경우의 유일한 출처이고, 아래 processor가 nvidia-smi가 값을 낸 경우엔 버린다.
+    private final ClassPathResource telegrafConfigInputsNvidiaGpm =
+            new ClassPathResource("telegraf_inputs_nvidia_gpm");
+    private final ClassPathResource telegrafProcessorsGpmToDcgm =
+            new ClassPathResource("telegraf_processors_gpm_to_dcgm");
 
     public static final String CONFIG_METRIC_CPU = "cpu";
     public static final String CONFIG_METRIC_DISK = "disk";
@@ -187,6 +193,18 @@ public class TelegrafConfigFacadeService {
             throw new RuntimeException(errMsg);
         }
 
+        if (!telegrafConfigInputsNvidiaGpm.exists()) {
+            errMsg = "Invalid filePath : telegrafConfigInputsNvidiaGpm";
+            log.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
+
+        if (!telegrafProcessorsGpmToDcgm.exists()) {
+            errMsg = "Invalid filePath : telegrafProcessorsGpmToDcgm";
+            log.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
+
         StringBuilder sb = new StringBuilder();
 
         fileService.appendConfig(telegrafConfigGlobal, sb);
@@ -229,9 +247,13 @@ public class TelegrafConfigFacadeService {
                     fileService.appendConfig(telegrafConfigInputsSystem, sb);
                     break;
                 case CONFIG_METRIC_GPU:
-                    // nvidia-smi 직접 수집 + nvidia_smi -> dcgm measurement 변환
+                    // nvidia-smi 직접 수집 + nvidia_smi -> dcgm measurement 변환.
+                    // GPM은 MIG 게스트에서만 값이 남는 보완 경로라 그 뒤에 온다
+                    // (gpm processor가 dcgm 포인트를 먼저 봐야 시리즈 태그를 배운다).
                     fileService.appendConfig(telegrafConfigInputsNvidiaSmi, sb);
                     fileService.appendConfig(telegrafProcessorsNvidiaSmiToDcgm, sb);
+                    fileService.appendConfig(telegrafConfigInputsNvidiaGpm, sb);
+                    fileService.appendConfig(telegrafProcessorsGpmToDcgm, sb);
                     break;
                 default:
                     throw new RuntimeException("Invalid metric: " + metric);
