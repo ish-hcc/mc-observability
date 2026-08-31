@@ -44,15 +44,14 @@ public class TelegrafConfigFacadeService {
             new ClassPathResource("telegraf_inputs_system");
     private final ClassPathResource telegrafConfigOutputsInfluxDB =
             new ClassPathResource("telegraf_outputs_influxdb");
-    // GPU(DCGM Exporter) 메트릭 수집용: prometheus input + starlark processor 쌍으로 동작.
-    // starlark가 DCGM_FI_*/DCGM_EXP_* 메트릭명을 `dcgm` measurement의 필드로 변환한다.
-    private final ClassPathResource telegrafConfigInputsPrometheus =
-            new ClassPathResource("telegraf_inputs_prometheus");
-    private final ClassPathResource telegrafProcessorsStarlark =
-            new ClassPathResource("telegraf_processors_starlark");
-
-    @Value("${dcgm-exporter.url:http://localhost:9400/metrics}")
-    private String dcgmExporterUrl;
+    // GPU 메트릭 수집용: nvidia_smi input + starlark processor 쌍으로 동작.
+    // nvidia-smi는 드라이버에 동봉되므로 노드에 추가로 설치할 것이 없다.
+    // starlark가 nvidia_smi 필드를 `dcgm` measurement의 필드명으로 변환하므로
+    // 소비자(GpuMetricKeyField, 대시보드, 알람)는 수집기 교체의 영향을 받지 않는다.
+    private final ClassPathResource telegrafConfigInputsNvidiaSmi =
+            new ClassPathResource("telegraf_inputs_nvidia_smi");
+    private final ClassPathResource telegrafProcessorsNvidiaSmiToDcgm =
+            new ClassPathResource("telegraf_processors_nvidia_smi_to_dcgm");
 
     public static final String CONFIG_METRIC_CPU = "cpu";
     public static final String CONFIG_METRIC_DISK = "disk";
@@ -176,14 +175,14 @@ public class TelegrafConfigFacadeService {
             throw new RuntimeException(errMsg);
         }
 
-        if (!telegrafConfigInputsPrometheus.exists()) {
-            errMsg = "Invalid filePath : telegrafConfigInputsPrometheus";
+        if (!telegrafConfigInputsNvidiaSmi.exists()) {
+            errMsg = "Invalid filePath : telegrafConfigInputsNvidiaSmi";
             log.error(errMsg);
             throw new RuntimeException(errMsg);
         }
 
-        if (!telegrafProcessorsStarlark.exists()) {
-            errMsg = "Invalid filePath : telegrafProcessorsStarlark";
+        if (!telegrafProcessorsNvidiaSmiToDcgm.exists()) {
+            errMsg = "Invalid filePath : telegrafProcessorsNvidiaSmiToDcgm";
             log.error(errMsg);
             throw new RuntimeException(errMsg);
         }
@@ -230,9 +229,9 @@ public class TelegrafConfigFacadeService {
                     fileService.appendConfig(telegrafConfigInputsSystem, sb);
                     break;
                 case CONFIG_METRIC_GPU:
-                    // DCGM Exporter(:9400/metrics) 스크랩 + DCGM_FI_* -> dcgm measurement 변환
-                    fileService.appendConfig(telegrafConfigInputsPrometheus, sb);
-                    fileService.appendConfig(telegrafProcessorsStarlark, sb);
+                    // nvidia-smi 직접 수집 + nvidia_smi -> dcgm measurement 변환
+                    fileService.appendConfig(telegrafConfigInputsNvidiaSmi, sb);
+                    fileService.appendConfig(telegrafProcessorsNvidiaSmiToDcgm, sb);
                     break;
                 default:
                     throw new RuntimeException("Invalid metric: " + metric);
@@ -253,7 +252,6 @@ public class TelegrafConfigFacadeService {
         log.debug(finalNodeId);
 
         return sb.toString()
-                .replace("@DCGM_EXPORTER_URL", dcgmExporterUrl)
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
                 .replace("@INFRA_ID", finalInfraId)
